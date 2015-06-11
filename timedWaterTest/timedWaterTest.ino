@@ -102,20 +102,29 @@ void WaterOff(){
 void CheckWaterOn(){
   unsigned long diff = millis() - last_fill_start;
   lcd.setCursor(0, 1);
-  if (WATERON && diff > FILLTIME_MILLIS){
+  bool state = digitalRead(PUMP_PIN);
+  
+  if (state && diff > FILLTIME_MILLIS){
     lcd.print("Water too long  ");
     Serial.print("Water on passed fill time ");
     Serial.println(diff);
     Serial.println(FILLTIME_MILLIS);
     WaterOff();
   }
-  else if (WATERON && diff < FILLTIME_MILLIS) {
+  else if (state && diff < FILLTIME_MILLIS) {
     lcd.print("Within fill, OK ");
     Serial.println("Within fill cycle, all OK");
+  }
+  else if (!state && !shitscreek && WATERON && diff < FILLTIME_MILLIS) {
+    lcd.print("Resume fill, OK ");
+    Serial.println("Within fill cycle, resume OK");
+    digitalWrite(PUMP_PIN, HIGH);
+    WATERON = true;
   }
   else {
     lcd.print("Water off, OK   ");
     Serial.println("Water off, all OK");
+    WaterOff();
   }
 }
 
@@ -126,14 +135,13 @@ void checkOverflow()
   if (digitalRead(OVERFLOW_PIN) == LOW) {
     shitscreek = true;
     lcd.print("WATER OVERFLOW!!");
-    WaterOff();
+    digitalWrite(PUMP_PIN, LOW);
+    //WaterOff();
   }
   else {
     if (shitscreek == true) {
       shitscreek = false;
-      WaterOn();
       CheckWaterOn();
-//      lcd.print("                ");
     }
   }
 }
