@@ -31,11 +31,11 @@ unsigned long FILLTIME_MILLIS = FILLTIME_HALF_MINUTES * 30 * 1000; //  in millis
 unsigned long last_fill_start;
 
 int OVERFLOW_PIN = 2;
-bool shitscreek = false;
 
 void setup()
 {
   pinMode(PUMP_PIN, OUTPUT);
+  digitalWrite(PUMP_PIN, HIGH);
   pinMode(OVERFLOW_PIN, INPUT);
   
   // LCD Setup
@@ -62,7 +62,7 @@ void setup()
 }
 
 void  loop(){  
-  checkOverflow();
+  CheckWaterOn();
   digitalClockDisplay();
   Alarm.delay(1000); // wait one second between clock display
 }
@@ -79,9 +79,9 @@ void EveningAlarm(){
 }
 
 void WaterOn(){
-  if (!WATERON){
+  if (digitalRead(PUMP_PIN)){
     lcd.setCursor(0, 1);
-    digitalWrite(PUMP_PIN, HIGH);
+    digitalWrite(PUMP_PIN, LOW);
     last_fill_start = millis();
     Alarm.timerOnce(0, FILLTIME_HALF_MINUTES, 0, WaterOff);
     WATERON = true;
@@ -90,59 +90,41 @@ void WaterOn(){
 }
 
 void WaterOff(){
-  if (WATERON){
-    Serial.println("Water OFF");
-    digitalWrite(PUMP_PIN, LOW);
-    WATERON = false;
-  }
-  lcd.setCursor(0, 1);
-  lcd.print("Water OFF       ");
+  Serial.println("Water OFF");
+  digitalWrite(PUMP_PIN, HIGH);
+  WATERON = false;
 }
 
 void CheckWaterOn(){
   unsigned long diff = millis() - last_fill_start;
   lcd.setCursor(0, 1);
-  bool state = digitalRead(PUMP_PIN);
+  bool pumping = !digitalRead(PUMP_PIN);
+  bool overflowing = !digitalRead(OVERFLOW_PIN);
   
-  if (state && diff > FILLTIME_MILLIS){
+  if (overflowing) {
+    lcd.print("WATER OVERFLOW!!");
+    digitalWrite(PUMP_PIN, HIGH);
+  }
+  else if (pumping && diff > FILLTIME_MILLIS){
     lcd.print("Water too long  ");
     Serial.print("Water on passed fill time ");
     Serial.println(diff);
     Serial.println(FILLTIME_MILLIS);
     WaterOff();
   }
-  else if (state && diff < FILLTIME_MILLIS) {
+  else if (pumping && diff < FILLTIME_MILLIS) {
     lcd.print("Within fill, OK ");
     Serial.println("Within fill cycle, all OK");
   }
-  else if (!state && !shitscreek && WATERON && diff < FILLTIME_MILLIS) {
+  else if (!pumping && WATERON && diff < FILLTIME_MILLIS) {
     lcd.print("Resume fill, OK ");
     Serial.println("Within fill cycle, resume OK");
-    digitalWrite(PUMP_PIN, HIGH);
-    WATERON = true;
+    digitalWrite(PUMP_PIN, LOW);
   }
   else {
+    WaterOff();
     lcd.print("Water off, OK   ");
     Serial.println("Water off, all OK");
-    WaterOff();
-  }
-}
-
-void checkOverflow()
-{
-  Serial.println(digitalRead(OVERFLOW_PIN));
-  lcd.setCursor(0, 1); 
-  if (digitalRead(OVERFLOW_PIN) == LOW) {
-    shitscreek = true;
-    lcd.print("WATER OVERFLOW!!");
-    digitalWrite(PUMP_PIN, LOW);
-    //WaterOff();
-  }
-  else {
-    if (shitscreek == true) {
-      shitscreek = false;
-      CheckWaterOn();
-    }
   }
 }
 
