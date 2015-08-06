@@ -26,7 +26,7 @@ bool WATERON = false;
 int PUMP_PIN = 5;
 int CHECK_INTERVAL_MINUTES = 1;
 unsigned int FILL_INTERVAL = 5 * 60; // seconds between fills
-unsigned long FILLTIME_HALF_MINUTES = 3; // in x30 second bulks
+unsigned long FILLTIME_HALF_MINUTES = 4; // in x30 second bulks
 unsigned long FILLTIME_MILLIS = FILLTIME_HALF_MINUTES * 30 * 1000; //  in milliseconds  
 unsigned long last_fill_start;
 
