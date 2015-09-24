@@ -72,7 +72,7 @@ void setup()
   Alarm.timerRepeat(0, CHECK_INTERVAL_MINUTES, 0, CheckWaterOn);            // timer for every fill time    
   //Alarm.timerRepeat(FILL_INTERVAL, FillTimer);  //For testing with higher frequencey
 
-  Alarm.alarmRepeat(0,00,0, FillTimer);  
+  Alarm.alarmRepeat(0,00,1, FillTimer);  
   Alarm.alarmRepeat(8,00,0, FillTimer);
   Alarm.alarmRepeat(12,00,0, FillTimer);
   Alarm.alarmRepeat(20,00,0, FillTimer);
