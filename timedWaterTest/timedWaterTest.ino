@@ -16,11 +16,18 @@
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
-
-#include <buttons.h>
+#include "tx433_Nexa.h" // Nexa headers
+#include <buttons.h>  // Button sensing
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Nexa ID
+String tx_nexa = "1010101010101010101010101010101010101010101010101010";
+String ch_nexa="1010";
+
+// RF transmit Pin 3
+Tx433_Nexa Nexa(3, tx_nexa, ch_nexa);
 
 // Set timer intervals and water pin
 
@@ -72,10 +79,16 @@ void setup()
   Alarm.timerRepeat(0, CHECK_INTERVAL_MINUTES, 0, CheckWaterOn);            // timer for every fill time    
   //Alarm.timerRepeat(FILL_INTERVAL, FillTimer);  //For testing with higher frequencey
 
+  // Water alarms
   Alarm.alarmRepeat(0,00,1, FillTimer);  
   Alarm.alarmRepeat(8,00,0, FillTimer);
   Alarm.alarmRepeat(12,00,0, FillTimer);
   Alarm.alarmRepeat(20,00,0, FillTimer);
+  
+  // Light alarms
+  Alarm.alarmRepeat(8,00,0, LightOn);
+  Alarm.alarmRepeat(0,00,1, LightOff);
+  
 }
 
 void  loop(){  
@@ -89,6 +102,18 @@ void  loop(){
 void FillTimer(){
   Serial.println("FillTimer: - turn water on");    
   WaterOn();
+}
+
+// Light On
+void LightOn(){
+  Serial.println("Light on, Good morning!");
+  Nexa.Device_On(0);
+}
+
+// Light timer
+void LightOff(){
+  Serial.println("Light Off, Good nights!");
+  Nexa.Device_Off(0);
 }
 
 void ForcedTimer(){
