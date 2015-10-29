@@ -1,15 +1,10 @@
 /*
- * TimeAlarmExample.pde
+ * control.ino
  *
- * This example calls alarm functions at 8:30 am and at 5:45 pm (17:45)
- * and simulates turning lights on at night and off in the morning
- * A weekly timer is set for Saturdays at 8:30:30
+ * Control code for hydrogarden watering, health meassurements and light 
  *
- * A timer is called every 15 seconds
- * Another timer is called once only after 10 seconds
- *
- * At startup the time is set to Jan 1 2011  8:29 am
  */
+ 
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 
@@ -40,6 +35,10 @@ unsigned long FILLTIME_MILLIS = FILLTIME_HALF_MINUTES * 30 * 1000; //  in millis
 unsigned long last_fill_start;
 
 int OVERFLOW_PIN = 2;
+
+// Light timers
+int light_time_on[3] = {8, 0, 0};
+int light_time_off[3] = {0, 0, 2};
 
 // Push button to force cylce
 int FORCE_CYCLE_PIN = 7;
@@ -86,9 +85,11 @@ void setup()
   Alarm.alarmRepeat(20,00,0, FillTimer);
   
   // Light alarms
-  Alarm.alarmRepeat(8,00,0, LightOn);
-  Alarm.alarmRepeat(0,00,1, LightOff);
+  Alarm.alarmRepeat(light_time_on[0], light_time_on[1], light_time_on[2], LightOn);
+  Alarm.alarmRepeat(light_time_off[0], light_time_off[1], light_time_off[2], LightOff);
   
+  // Make sure light is on/off as planned by the hour
+  checkLight();
 }
 
 void  loop(){  
@@ -197,10 +198,33 @@ void CheckWaterOn(){
   }
 }
 
+void checkLight()
+{
+  if (light_time_off[0] < light_time_on[0])
+    {
+      if (hour() >= light_time_on[0])
+      {
+        LightOn();
+      }
+      else
+        LightOff();
+    }
+  else
+    {
+      if (hour() >= light_time_on[0] <= hour() < light_time_off[0])
+      {
+        LightOn();
+      }
+      else
+        LightOff();
+    }
+}
 void digitalClockDisplay()
 {
   // digital clock display of the time
   lcd.home();
+  if (hour() == 0)
+    lcd.print('0');
   lcd.print(hour());
   printDigits(minute());
   printDigits(second());
