@@ -36,6 +36,10 @@ unsigned long last_fill_start;
 
 int OVERFLOW_PIN = 2;
 
+// Light timers
+int light_time_on[3] = {8, 0, 0};
+int light_time_off[3] = {0, 0, 2};
+
 // Push button to force cylce
 int FORCE_CYCLE_PIN = 7;
 Button ForceCycleBtn;
@@ -81,9 +85,11 @@ void setup()
   Alarm.alarmRepeat(20,00,0, FillTimer);
   
   // Light alarms
-  Alarm.alarmRepeat(8,00,0, LightOn);
-  Alarm.alarmRepeat(0,00,2, LightOff);
+  Alarm.alarmRepeat(light_time_on[0], light_time_on[1], light_time_on[2], LightOn);
+  Alarm.alarmRepeat(light_time_off[0], light_time_off[1], light_time_off[2], LightOff);
   
+  // Make sure light is on/off as planned by the hour
+  checkLight();
 }
 
 void  loop(){  
@@ -192,10 +198,33 @@ void CheckWaterOn(){
   }
 }
 
+void checkLight()
+{
+  if (light_time_off[0] < light_time_on[0])
+    {
+      if (hour() >= light_time_on[0])
+      {
+        LightOn();
+      }
+      else
+        LightOff();
+    }
+  else
+    {
+      if (hour() >= light_time_on[0] <= hour() < light_time_off[0])
+      {
+        LightOn();
+      }
+      else
+        LightOff();
+    }
+}
 void digitalClockDisplay()
 {
   // digital clock display of the time
   lcd.home();
+  if (hour() == 0)
+    lcd.print('0');
   lcd.print(hour());
   printDigits(minute());
   printDigits(second());
