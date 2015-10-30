@@ -242,7 +242,7 @@ void digitalClockDisplay()
 {
   // digital clock display of the time
   lcd.home();
-  if (hour() == 0)
+  if (hour() < 10)
     lcd.print('0');
   lcd.print(hour());
   printDigits(minute());
