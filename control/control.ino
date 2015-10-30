@@ -80,9 +80,9 @@ void setup()
 
   // Water alarms
   Alarm.alarmRepeat(0,00,1, FillTimer);  
-  Alarm.alarmRepeat(8,00,0, FillTimer);
+  Alarm.alarmRepeat(6,00,0, FillTimer);
   Alarm.alarmRepeat(12,00,0, FillTimer);
-  Alarm.alarmRepeat(20,00,0, FillTimer);
+  Alarm.alarmRepeat(18,00,0, FillTimer);
   
   // Light alarms
   Alarm.alarmRepeat(light_time_on[0], light_time_on[1], light_time_on[2], LightOn);
