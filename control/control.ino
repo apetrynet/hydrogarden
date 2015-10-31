@@ -7,12 +7,15 @@
  
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-
+#include <SoftwareSerial.h>
 #include <Time.h>
 #include <TimeAlarms.h>
 #include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
 #include "tx433_Nexa.h" // Nexa headers
 #include <buttons.h>  // Button sensing
+
+// Setup software serial
+SoftwareSerial com(10, 11); // RX, TX
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -60,65 +63,58 @@ void setup()
   lcd.begin();
   lcd.backlight();
   
-  while (!Serial) ; // wait until Arduino Serial Monitor opens
   setSyncProvider(RTC.get);   // the function to get the time from the RTC
   
   // Set control time
   last_fill_start = millis();
   
-  Serial.begin(9600);
-  Serial.println(FILLTIME_MILLIS);
-  
-  //setTime(8,29,50,1,1,11); // set time to Saturday 8:29:00am Jan 1 2011
-  
-  // create the alarms 
-  //Alarm.alarmRepeat(8,00,0, MorningAlarm);  // 8:00am every day
-  //Alarm.alarmRepeat(8,35,0,EveningAlarm);  // 8:45pm every day 
+  //Serial.begin(9600);
   
   Alarm.timerRepeat(0, CHECK_INTERVAL_MINUTES, 0, CheckWaterOn);            // timer for every fill time    
-  //Alarm.timerRepeat(FILL_INTERVAL, FillTimer);  //For testing with higher frequencey
+  //Alarm.timerRepeat(FILL_INTERVAL, WaterOn);  //For testing with higher frequencey
 
   // Water alarms
-  Alarm.alarmRepeat(0,00,1, FillTimer);  
-  Alarm.alarmRepeat(8,00,0, FillTimer);
-  Alarm.alarmRepeat(12,00,0, FillTimer);
-  Alarm.alarmRepeat(20,00,0, FillTimer);
+  Alarm.alarmRepeat(0,00,1, WaterOn);  
+  Alarm.alarmRepeat(6,00,0, WaterOn);
+  Alarm.alarmRepeat(12,00,0, WaterOn);
+  Alarm.alarmRepeat(18,00,0, WaterOn);
   
   // Light alarms
   Alarm.alarmRepeat(light_time_on[0], light_time_on[1], light_time_on[2], LightOn);
   Alarm.alarmRepeat(light_time_off[0], light_time_off[1], light_time_off[2], LightOff);
+
+  // Set data rate for communication with espXXX
+  com.begin(9600);
+  com.print("\r\n\r\n\r\nrequire('main').main();\r\n\r\n\r\n");
   
   // Make sure light is on/off as planned by the hour
   checkLight();
+  
 }
 
 void  loop(){  
   CheckWaterOn();
   CheckButtons();
   digitalClockDisplay();
-  Alarm.delay(0); // wait one second between clock display
-}
-
-// functions to be called when an alarm triggers:
-void FillTimer(){
-  Serial.println("FillTimer: - turn water on");    
-  WaterOn();
+  Alarm.delay(0); // o == check all the time
 }
 
 // Light On
 void LightOn(){
-  Serial.println("Light on, Good morning!");
+  //Serial.println("Light on, Good morning!");
   Nexa.Device_On(0);
+  sendData("id=light value=on");
 }
 
 // Light timer
 void LightOff(){
-  Serial.println("Light Off, Good nights!");
+  //Serial.println("Light Off, Good nights!");
   Nexa.Device_Off(0);
+  sendData("id=light value=off");
 }
 
 void ForcedTimer(){
-  Serial.println("ForcedTimer: - turn water on");    
+  //Serial.println("ForcedTimer: - turn water on");    
   WaterOn();
 }
 
@@ -130,35 +126,38 @@ void WaterOn(){
     Alarm.timerOnce(0, FILLTIME_HALF_MINUTES, 0, WaterOff);
     WATERON = true;
     lcd.print("Water ON        ");
+    sendData("id=water value=on");
   }
 }
 
 void WaterOff(){
   //Serial.println("Water OFF");
   digitalWrite(PUMP_PIN, HIGH);
+  if (WATERON)
+    sendData("id=water value=off");
   WATERON = false;
 }
 
 void CheckButtons(){
  switch (ForceCycleBtn.check()) {
    case ON:
-     Serial.println("BUTTON PRESSED");
+     //Serial.println("BUTTON PRESSED");
      if (digitalRead(PUMP_PIN)) {
        //Alarm.timerOnce(0, 0, 1, WaterOn);
        WaterOn();
      }
      else {
-       Serial.println("BUTTON IGNORED");
+       //Serial.println("BUTTON IGNORED");
      }
      break;
    case Hold:
-     Serial.println("BUTTON HELD");
+     //Serial.println("BUTTON HELD");
      if (!digitalRead(PUMP_PIN)) {
        //Alarm.timerOnce(0, 0, 1, WaterOn);
        WaterOff();
      }
      else {
-       Serial.println("BUTTON IGNORED");
+       //Serial.println("BUTTON IGNORED");
      }
      break;
    default:
@@ -198,42 +197,44 @@ void CheckWaterOn(){
   }
 }
 
+void sendData(String value)
+{
+  com.print("set-property " + value + "\r\n");
+  /*static long last_transmit = millis();
+  if ((millis() - last_transmit) >= 100)
+   { 
+    com.print("set-property " + value + "\r\n");
+    last_transmit = millis();
+   }*/
+}
+
 void checkLight()
 {
   if (light_time_off[0] < light_time_on[0])
     {
       if (hour() >= light_time_on[0])
-      {
         LightOn();
-      }
       else
         LightOff();
     }
   else
     {
-      if (hour() >= light_time_on[0] <= hour() < light_time_off[0])
-      {
+      if (hour() >= light_time_on[0] && hour() < light_time_off[0])
         LightOn();
-      }
       else
         LightOff();
     }
 }
+
 void digitalClockDisplay()
 {
   // digital clock display of the time
   lcd.home();
-  if (hour() == 0)
+  if (hour() < 10)
     lcd.print('0');
   lcd.print(hour());
   printDigits(minute());
   printDigits(second());
-  //Serial.print(" Millis: ");
-  //Serial.print(millis());
-  //Serial.print(" Last: ");
-  //Serial.print(last_fill_start);
-  
-  //Serial.println(); 
 }
 
 void printDigits(int digits)
