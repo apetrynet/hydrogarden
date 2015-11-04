@@ -30,21 +30,21 @@ Tx433_Nexa Nexa(3, tx_nexa, ch_nexa);
 // Set timer intervals and water pin
 
 bool WATERON = false;
-int PUMP_PIN = 5;
+const int PUMP_PIN = 5;
 int CHECK_INTERVAL_MINUTES = 1;
 unsigned int FILL_INTERVAL = 5 * 60; // seconds between fills
 unsigned long FILLTIME_HALF_MINUTES = 4; // in x30 second bulks
 unsigned long FILLTIME_MILLIS = FILLTIME_HALF_MINUTES * 30 * 1000; //  in milliseconds  
 unsigned long last_fill_start;
 
-int OVERFLOW_PIN = 2;
+const int OVERFLOW_PIN = 2;
 
 // Light timers
 int light_time_on[3] = {8, 0, 0};
 int light_time_off[3] = {0, 0, 2};
 
 // Push button to force cylce
-int FORCE_CYCLE_PIN = 7;
+const int FORCE_CYCLE_PIN = 7;
 Button ForceCycleBtn;
 
 void setup()
@@ -83,13 +83,13 @@ void setup()
   Alarm.alarmRepeat(light_time_on[0], light_time_on[1], light_time_on[2], LightOn);
   Alarm.alarmRepeat(light_time_off[0], light_time_off[1], light_time_off[2], LightOff);
 
+  // Make sure light is on/off as planned. Accurate within the hour
+  checkLight();
+  
   // Set data rate for communication with espXXX
   com.begin(9600);
   com.print("\r\n\r\n\r\nrequire('main').main();\r\n\r\n\r\n");
-  
-  // Make sure light is on/off as planned by the hour
-  checkLight();
-  
+
 }
 
 void  loop(){  
@@ -230,16 +230,15 @@ void digitalClockDisplay()
 {
   // digital clock display of the time
   lcd.home();
-  if (hour() < 10)
-    lcd.print('0');
-  lcd.print(hour());
+  printDigits(hour());
+  lcd.print(":");
   printDigits(minute());
+  lcd.print(":");
   printDigits(second());
 }
 
 void printDigits(int digits)
 {
-  lcd.print(":");
   if(digits < 10)
     lcd.print('0');
   lcd.print(digits);
