@@ -1,5 +1,6 @@
 # Hydrogarden
-Arduino controlled hydroponic garden
+Arduino controlled hydroponic garden.<br>
+Current setup is an Ebb & Flow system with a bell siphon with clay balls from IKEA as grow medium.
 
 # Hardware
 * Arduino Nano
