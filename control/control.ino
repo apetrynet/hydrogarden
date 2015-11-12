@@ -14,6 +14,10 @@
 #include "tx433_Nexa.h" // Nexa headers
 #include <buttons.h>  // Button sensing
 
+// Temperature Pin
+const int TEMP_PIN = A1;
+float tempC = 0;
+  
 // Setup software serial
 SoftwareSerial com(10, 11); // RX, TX
 
@@ -49,9 +53,16 @@ Button ForceCycleBtn;
 
 void setup()
 {
+  // Set aRef to INTERNAL 1.1v
+  analogReference(INTERNAL);
+
+  pinMode(TEMP_PIN, OUTPUT);
+  
   pinMode(PUMP_PIN, OUTPUT);
   digitalWrite(PUMP_PIN, HIGH);
+  
   pinMode(OVERFLOW_PIN, INPUT);
+  
   pinMode(FORCE_CYCLE_PIN, INPUT);
   digitalWrite(FORCE_CYCLE_PIN, LOW);
   
@@ -95,6 +106,7 @@ void setup()
 void  loop(){  
   CheckWaterOn();
   CheckButtons();
+  sendTemp();
   digitalClockDisplay();
   Alarm.delay(0); // o == check all the time
 }
@@ -225,6 +237,30 @@ void checkLight()
         LightOff();
     }
 }
+
+void sendTemp()
+{
+  static long last_temp_transmit = millis();
+  if ((millis() - last_temp_transmit) >= 100)
+   { 
+    readTemp();
+    String data = "id=temp value=";
+    data += tempC;
+    sendData(data);
+    //Serial.print("Temp in room: ");
+    //Serial.println(data);
+    last_temp_transmit = millis();
+   }
+  }
+  
+void readTemp()
+{
+  float tmp = 0;
+  for (int i=0; i < 10; i++)
+    tmp += analogRead(TEMP_PIN) / 9.31;
+
+  tempC = tmp / 10;
+  }
 
 void digitalClockDisplay()
 {
