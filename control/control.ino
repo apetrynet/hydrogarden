@@ -19,7 +19,7 @@ const int TEMP_PIN = A1;
 float tempC = 0;
   
 // Setup software serial
-SoftwareSerial com(10, 11); // RX, TX
+SoftwareSerial com(11, 10); // RX, TX
 
 // Set the LCD address to 0x27 for a 16 chars and 2 line display
 LiquidCrystal_I2C lcd(0x27, 16, 2);
@@ -48,7 +48,7 @@ int light_time_on[3] = {8, 0, 0};
 int light_time_off[3] = {0, 0, 2};
 
 // Push button to force cylce
-const int FORCE_CYCLE_PIN = 7;
+const int FORCE_CYCLE_PIN = 13;
 Button ForceCycleBtn;
 
 void setup()
@@ -66,7 +66,7 @@ void setup()
   pinMode(FORCE_CYCLE_PIN, INPUT);
   digitalWrite(FORCE_CYCLE_PIN, LOW);
   
-  ForceCycleBtn.assign(7);
+  ForceCycleBtn.assign(FORCE_CYCLE_PIN);
   ForceCycleBtn.setMode(OneShotTimer);
   ForceCycleBtn.turnOffPullUp();
   
@@ -99,8 +99,7 @@ void setup()
   
   // Set data rate for communication with espXXX
   com.begin(9600);
-  com.print("\r\n\r\n\r\nrequire('main').main();\r\n\r\n\r\n");
-
+  
 }
 
 void  loop(){  
@@ -241,7 +240,7 @@ void checkLight()
 void sendTemp()
 {
   static long last_temp_transmit = millis();
-  if ((millis() - last_temp_transmit) >= 100)
+  if ((millis() - last_temp_transmit) >= 60000)
    { 
     readTemp();
     String data = "id=temp value=";
