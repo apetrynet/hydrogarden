@@ -10,7 +10,8 @@
 #include <SoftwareSerial.h>
 #include <Time.h>
 #include <TimeAlarms.h>
-#include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
+//#include <DS1307RTC.h>  // a basic DS1307 library that returns time as a time_t
+#include <DS3232RTC.h>  //http://github.com/JChristensen/DS3232RTC
 #include "tx433_Nexa.h" // Nexa headers
 #include <buttons.h>  // Button sensing
 
@@ -254,11 +255,15 @@ void sendTemp()
   
 void readTemp()
 {
-  float tmp = 0;
+  int temp = RTC.temperature();
+  tempC = temp / 4.0;
+  /*
+  int tmp = 0;
   for (int i=0; i < 10; i++)
-    tmp += analogRead(TEMP_PIN) / 9.31;
+    tmp += analogRead(TEMP_PIN);
 
-  tempC = tmp / 10;
+  tempC = (tmp / 10) / 9.31;
+  */
   }
 
 void digitalClockDisplay()
