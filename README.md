@@ -1,3 +1,6 @@
+# This Project is abandoned.
+Please go to https://github.com/bitraf/bitraf-hydroponics for the new revision of this project.
+
 # Hydrogarden
 Arduino controlled hydroponic garden.<br>
 Current setup is an Ebb & Flow system with a bell siphon with clay balls from IKEA as grow medium.
